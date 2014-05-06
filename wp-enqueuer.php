@@ -23,6 +23,11 @@ Copyright 2014 De'Yonte W.
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA 
 */
 
+// File Security Check
+if ( ! empty( $_SERVER['SCRIPT_FILENAME'] ) && basename( __FILE__ ) == basename( $_SERVER['SCRIPT_FILENAME'] ) ) {
+  die ( 'You do not have sufficient permissions to access this page!' );
+}
+
 // Only create an instance of the plugin if it doesn't already exists in GLOBALS
 if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
  
@@ -32,6 +37,15 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
 
     public function __construct() {
       $this->script_file = "wp-enqueuer-scripts.json";
+
+      //load WordPress hooks
+      $this->admin_hooks();
+    }
+
+    public function admin_hooks(){
+      add_action( 'admin_menu', 'register_my_custom_menu_page' );
+      //http://codex.wordpress.org/add_menu_page
+      add_menu_page('WP Enqueuer Settings', 'WP Enqueuer', 'manage_options', __FILE__, array(&$this,'settings_page') , get_stylesheet_directory_uri('stylesheet_directory')."/images/media-button-other.gif");
     }
 
     public function install(){
@@ -80,8 +94,38 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       return $public_post_types;
     }
 
-    public function set_post(){
-      
+    public function set_enqueue(){
+      // don't autosave
+      if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
+
+      // if user can't manage options
+      if( !current_user_can( 'manage_options' ) ) return;
+
+      // if our nonce isn't there, or we can't verify it, bail
+        if( !isset( $_POST['wp_enqueuer_nonce'] ) || !wp_verify_nonce( $_POST['wp_enqueuer_nonce'], 'wp_enqueuer_nonce' ) ) return; 
+
+      // save the scripts to be enqueued based on the post type
+      $post_types = $this->get_post_types();
+      $set_enqueue = array();
+      foreach( $post_types as $key=>$value ){
+        $wp_enqueuer = $_POST['wp_enqueuer_'.$key];
+        foreach( $wp_enqueuer as $enqueue ){
+
+        }
+
+        if( !empty($wp_enqueuer) AND !is_null($wp_enqueuer) )
+          $result = update_option( 'wp_enqueuer_'.$key, $wp_enqueuer);
+        
+        $set_enqueue[$key] = $result;
+      }
+
+      return $set_enqueue;
+    }
+
+    public function settings_page(){
+      ?>
+      <p><?php _e( 'Select scripts to enqueue' );?></p>
+      <?php
     }
   }
    
