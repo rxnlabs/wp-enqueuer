@@ -34,18 +34,21 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
   class WP_Enqueuer {
     
     private $script_file;
+    private $version;
 
     public function __construct() {
-      $this->script_file = "wp-enqueuer-scripts.json";
+      $this->script_file = 'wp-enqueuer-scripts.json';
+      $this->version = '1.0a';
 
       //load WordPress hooks
       $this->admin_hooks();
     }
 
     public function admin_hooks(){
-      add_action( 'admin_menu', 'register_my_custom_menu_page' );
-      //http://codex.wordpress.org/add_menu_page
-      add_menu_page('WP Enqueuer Settings', 'WP Enqueuer', 'manage_options', __FILE__, array(&$this,'settings_page') , get_stylesheet_directory_uri('stylesheet_directory')."/images/media-button-other.gif");
+      add_action( 'admin_menu', array(&$this,'settings_page') );
+      add_action( 'admin_enqueue_scripts', array(&$this,'admin_enqueue') );
+      add_action( 'admin_init', array(&$this,'set_enqueue') );
+      //$this->set_enqueue();
     }
 
     public function install(){
@@ -81,7 +84,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       $public_post_types = get_post_types(array('public'=>'true'),'names');
 
       // post types to not enqueue scripts for
-      $remove_posts = array();
+      $remove_posts = array('attachment');
 
       // remove certain post types
       foreach ($public_post_types as $value) {
@@ -95,20 +98,22 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
     }
 
     public function set_enqueue(){
+
       // don't autosave
       if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 
       // if user can't manage options
       if( !current_user_can( 'manage_options' ) ) return;
-
+      
       // if our nonce isn't there, or we can't verify it, bail
-        if( !isset( $_POST['wp_enqueuer_nonce'] ) || !wp_verify_nonce( $_POST['wp_enqueuer_nonce'], 'wp_enqueuer_nonce' ) ) return; 
-
+      if( !isset( $_POST['wp_enqueuer_nonce'] ) || !wp_verify_nonce( $_POST['wp_enqueuer_nonce'], 'wp_enqueuer_nonce' ) ) return; 
+      
       // save the scripts to be enqueued based on the post type
       $post_types = $this->get_post_types();
       $set_enqueue = array();
       foreach( $post_types as $key=>$value ){
         $wp_enqueuer = $_POST['wp_enqueuer_'.$key];
+
         foreach( $wp_enqueuer as $enqueue ){
 
         }
@@ -123,9 +128,51 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
     }
 
     public function settings_page(){
-      ?>
-      <p><?php _e( 'Select scripts to enqueue' );?></p>
-      <?php
+      add_options_page( 'WP Enqueuer Settings', 'WP Enqueuer', 'manage_options', 'wp-enqueuer-page.php', array(&$this,'load_settings_page') );
+    }
+
+    public function load_settings_page(){
+      include( 'wp-enqueuer-page.php' );
+    }
+
+    public function admin_enqueue($hook){
+      if( 'settings_page_wp-enqueuer-page' === $hook ){
+        $this->admin_enqueue_scripts();
+        $this->admin_enqueue_styles();
+      }
+    }
+
+    public function admin_enqueue_scripts(){
+      global $wp_scripts;
+      // register scripts
+      wp_register_script( 'bootstrap-collapse', plugin_dir_url( __FILE__ ).'library/js/bootstrap/js/bootstrap.min.js' , array('jquery'), '3.1.1' );
+      wp_register_script( 'checkboxes.js', plugin_dir_url( __FILE__ ).'library/js/jquery.checkboxes-1.0.3.min.js' , array('jquery'), '1.0.3' );
+      wp_register_script( 'footable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.min.js' , array('jquery'), '0.1.0' );
+      wp_register_script( 'footable-sortable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.sortable.min.js' , array('jquery','footable'), '0.1.0' );
+      wp_register_script( 'footable-filter', plugin_dir_url( __FILE__ ).'library/js/footable/footable.filter.min.js' , array('jquery','footable'), '0.1.0' );
+      wp_register_script( 'footable-paginate', plugin_dir_url( __FILE__ ).'library/js/footable/footable.paginate.js' , array('jquery','footable'), '0.1.0' );
+      wp_register_script( 'wp-enqueuer-scripts', plugin_dir_url( __FILE__ ).'library/js/wp-enqueuer-scripts.js' , array('jquery'), $this->version );
+
+      // enqueue scripts
+      wp_enqueue_script( 'bootstrap-collapse' );
+      wp_enqueue_script( 'checkboxes.js' );
+      wp_enqueue_script( 'footable' );
+      wp_enqueue_script( 'footable-sortable' );
+      wp_enqueue_script( 'footable-filter' );
+      wp_enqueue_script( 'footable-paginate' );
+      wp_enqueue_script( 'wp-enqueuer-scripts' );
+    }
+
+    public function admin_enqueue_styles(){
+      // register styles
+      wp_register_style( 'bootstrap-collapse', plugin_dir_url( __FILE__ ).'library/js/bootstrap/css/bootstrap.css' , false, '3.1.1' );
+      wp_register_style( 'footable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.min.css' , false, '0.1.0' );
+      wp_register_style( 'footable-sortable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.sortable.min.css' , false, '0.1.0' );
+
+      // enqueue styles
+      wp_enqueue_style( 'bootstrap-collapse' );
+      wp_enqueue_style( 'footable' );
+      wp_enqueue_style( 'footable-sortable' );
     }
   }
    
