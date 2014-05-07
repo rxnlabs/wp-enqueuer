@@ -19,15 +19,14 @@ wp_create_nonce( 'wp_enqueuer_nonce' );
         </div>
         <div id="wp_enqueuer_<?php echo $count;?>" class="panel-collapse collapse in">
           <div class="panel-body">
-            <input type="text" class="wp_enqueuer_footable_filter" id="wp_enqueuer_footable_filter_<?php _e( $post_type );?>">
-            <table class="wp_enqueuer_post_types widefat" data-toggle="checkboxes" data-range="true" data-page-size="10" data-page-previous-text="prev" data-page-next-text="next" data-page-navigation=".pagination" data-filter="#wp_enqueuer_footable_filter_<?php _e( $post_type );?>">
+            <table class="wp_enqueuer_post_types widefat" id="wp_enqueuer_<?php _e( $post_type );?>" data-toggle="checkboxes" data-range="true">
               <thead>
                 <tr>
                   <th data-sort-ignore="true"><?php _e( 'Select' );?></th>
                   <th data-sort-initial="true"><?php _e( 'Name' );?></th>
-                  <th><?php _e( 'Version' );?></th>
+                  <th data-hide="phone,tablet"><?php _e( 'Version' );?></th>
                   <th><?php _e( 'Type' );?></th>
-                  <th data-toggle="true"><?php _e( 'Location' );?></th>
+                  <th data-class="expand"><?php _e( 'Location' );?></th>
                 </tr>
               </thead>
               <?php
@@ -53,13 +52,6 @@ wp_create_nonce( 'wp_enqueuer_nonce' );
                 </tr>
                 <?php endforeach;?>
               </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="5">
-                  <div class="pagination pagination-centered hide-if-no-paging"></div>
-                  </td>
-                </tr>
-              </tfoot>
               <?php endif;?>
             </table>
           </div>

@@ -151,15 +151,21 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       wp_register_script( 'footable-sortable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.sortable.min.js' , array('jquery','footable'), '0.1.0' );
       wp_register_script( 'footable-filter', plugin_dir_url( __FILE__ ).'library/js/footable/footable.filter.min.js' , array('jquery','footable'), '0.1.0' );
       wp_register_script( 'footable-paginate', plugin_dir_url( __FILE__ ).'library/js/footable/footable.paginate.js' , array('jquery','footable'), '0.1.0' );
+      wp_register_script( 'datatables', 'http://cdn.datatables.net/1.9.4/js/jquery.dataTables.min.js' , array('jquery'), '1.9.4' );
+      wp_register_script( 'datatables-bootstrap',  plugin_dir_url( __FILE__ ).'library/js/dataTables.bootstrap.js' , array('jquery','datatables'), '1.1.1' );
+      wp_register_script( 'datatables-responsive', plugin_dir_url( __FILE__ ).'library/js/datatables-responsive/files/1/js/datatables.responsive.js' , array('jquery','datatables'), '1.10.0' );
       wp_register_script( 'wp-enqueuer-scripts', plugin_dir_url( __FILE__ ).'library/js/wp-enqueuer-scripts.js' , array('jquery'), $this->version );
 
       // enqueue scripts
       wp_enqueue_script( 'bootstrap-collapse' );
       wp_enqueue_script( 'checkboxes.js' );
       wp_enqueue_script( 'footable' );
+      wp_enqueue_script( 'footable-paginate' );
       wp_enqueue_script( 'footable-sortable' );
       wp_enqueue_script( 'footable-filter' );
-      wp_enqueue_script( 'footable-paginate' );
+      wp_enqueue_script( 'datatables' );
+      //wp_enqueue_script( 'datatables-bootstrap' );
+      wp_enqueue_script( 'datatables-responsive' );
       wp_enqueue_script( 'wp-enqueuer-scripts' );
     }
 
@@ -168,11 +174,15 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       wp_register_style( 'bootstrap-collapse', plugin_dir_url( __FILE__ ).'library/js/bootstrap/css/bootstrap.css' , false, '3.1.1' );
       wp_register_style( 'footable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.min.css' , false, '0.1.0' );
       wp_register_style( 'footable-sortable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.sortable.min.css' , false, '0.1.0' );
+      wp_register_style( 'datatables', plugin_dir_url( __FILE__ ).'library/js/datatables/css/jquery.dataTables.min.css' , false, '1.10.0' );
+      wp_register_style( 'datatables-responsive', plugin_dir_url( __FILE__ ).'library/js/datatables-responsive/files/1/css/datatables.responsive.css' , false, '1.10.0' );
 
       // enqueue styles
       wp_enqueue_style( 'bootstrap-collapse' );
       wp_enqueue_style( 'footable' );
       wp_enqueue_style( 'footable-sortable' );
+      wp_enqueue_style( 'datatables' );
+      wp_enqueue_style( 'datatables-responsive' );
     }
   }
    
