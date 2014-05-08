@@ -195,7 +195,12 @@
       "name": "checkboxes.js",
       "host": "local",
       "version": "1.0.3",
-      "uri": "jquery.checkboxes-1.0.3.min.js"
+      "uri": "jquery.checkboxes-1.0.3.min.js",
+      "deps": [
+        {
+          "name": "jquery"
+        }
+      ]
     }
   ],
   "styles": [

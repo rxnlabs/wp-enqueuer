@@ -1,6 +1,8 @@
 <?php
 $wp_enqueuer = $GLOBALS['wp-enqueuer'];
-wp_create_nonce( 'wp_enqueuer_nonce' );
+$scripts = $wp_enqueuer->get_enqueue();
+// merge dependies array into parent array
+
 ?>
 <div class="wrap">
   <h2><?php _e( 'WP Enqueuer Settings' );?></h2>
@@ -35,7 +37,17 @@ wp_create_nonce( 'wp_enqueuer_nonce' );
               <tbody>
                 <?php foreach( $assets->scripts as $script ):?>
                 <tr>
-                  <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $script->name );?>" class="wp_enqueuer"></td>
+                  <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $script->name );?>" 
+                  <?php
+                  //check to see if the script was selected or is dependent of another script
+                  if( !empty($scripts['wp_enqueuer_'.$post_type]) ){
+                      if( in_array($script->name,$scripts['wp_enqueuer_'.$post_type]) ){
+                        echo "checked";
+                      }elseif( $wp_enqueuer->in_array_r($script->name,$scripts['wp_enqueuer_'.$post_type]) ){
+                        echo "checked";
+                      }
+                    }
+                    ?> class="wp_enqueuer"></td>
                   <td><?php _e( $script->name );?></td>
                   <td><?php _e( $script->version );?></td>
                   <td><?php _e( 'Javascript' );?></td>
@@ -59,6 +71,7 @@ wp_create_nonce( 'wp_enqueuer_nonce' );
       </div>
       <?php endforeach;?>
     </div>
+    <?php wp_nonce_field( 'wp_enqueuer_save_settings', 'wp_enqueuer_settings' );?>
     <input name="wp_enqueuer_save" class="button button-primary button-large" id="publish" accesskey="p" value="Save Settings" type="submit">
   </form>
   <?php endif;?>

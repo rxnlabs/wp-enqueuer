@@ -8,6 +8,7 @@ if (window.jQuery) {
     };
     var tableElement = jQuery('.wp_enqueuer_post_types');
     tableElement.dataTable({
+      "sPaginationType": "full_numbers",
       //disable sorting on first column
       "aoColumnDefs" : [ 
         {
