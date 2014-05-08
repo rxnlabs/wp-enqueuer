@@ -52,7 +52,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
     }
 
     public function front_hooks(){
-      add_action( 'wp_enqueue_scripts', array(&$this,'front_enqueue_scripts') );
+      add_action( 'wp_enqueue_scripts', array(&$this,'front_enqueue_assets') );
     }
 
     public function install(){
@@ -101,6 +101,15 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       return $public_post_types;
     }
 
+    public function set_enqueue_deps($dependencies,$script_name){
+      $enqueue = array($script_name);
+      foreach( $dependencies as $dep ){
+        $enqueue[] = $dep['name'];
+      }
+      
+      return $enqueue;
+    }
+
     public function set_enqueue(){
       if( $_GET['page'] === "wp-enqueuer-page.php" ){
         if( isset($_POST) AND !empty($_POST) AND array_filter($_POST) != false AND is_admin() AND check_admin_referer('wp_enqueuer_save_settings','wp_enqueuer_settings') ){
@@ -122,31 +131,24 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
               if( !empty($wp_enqueuer) ){
                 $scripts_load = array();
                 $count =0;
-                foreach( $wp_enqueuer as $enqueue ){
+                foreach( $wp_enqueuer as $script_name ){
                   $dependency_found = false;
 
                   // search the scripts file to see if the selected scripts have any dependencies
-                  $script_key = $this->array_search_r($enqueue,$dependencies['scripts']);
+                  $script_key = $this->array_search_r($script_name,$dependencies['scripts']);
                   if( $script_key != false ){
 
                     //if script has dependencies, add those to array
                     if( !empty($dependencies['scripts'][$script_key[0]]['deps']) ){
-                      $script_name = $enqueue;
-                      $enqueue = array($script_name=>'');
-                      foreach( $dependencies['scripts'][$script_key[0]]['deps'] as $dep ){
-                        $enqueue[$script_name][] = $dep['name'];
-                      }
-                      $dependency_found = true;
+                      $script_name = $this->set_enqueue_deps($dependencies['scripts'][$script_key[0]]['deps'],$script_name);
                     }
 
-                    if( $dependency_found === false AND !empty($dependencies['styles'][$script_key[0]]['deps']) ){
-                      foreach( $dependencies['styles'][$script_key[0]]['deps'] as $dep ){
-                        $enqueue[$script_name][] = $dep['name'];
-                      }
+                    if( !empty($dependencies['styles'][$script_key[0]]['deps']) ){
+                      $script_name = $this->set_enqueue_deps($dependencies['styles'][$script_key[0]]['deps'],$script_name);
                     }
                   }
 
-                  $scripts_load[] = $enqueue;
+                  $scripts_load[] = $script_name;
                   
                   $count++;
                 } 
@@ -176,6 +178,38 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       }elseif( !is_null($post_type) ){
         if ( get_option( 'wp_enqueuer_'.$post_type ) !== false ) {
           $scripts['wp_enqueuer_'.$post_type] = get_option( 'wp_enqueuer_'.$post_type );
+        }
+      }
+
+      return $scripts;
+    }
+
+    public function get_enqueue_unique(){
+      $post_types = $this->get_post_types();
+
+      $scripts = false;
+      if( !empty($post_types) AND is_null($post_type) ){
+        $scripts = array();
+        foreach( $post_types as $key=>$value ){
+          if ( get_option( 'wp_enqueuer_'.$key ) !== false AND !empty(get_option( 'wp_enqueuer_'.$key )) ) {
+            $scripts['wp_enqueuer_'.$key] = get_option( 'wp_enqueuer_'.$key );
+            
+            $count = 0;
+            //loop through array to merge dependecines into one array
+            foreach( $scripts['wp_enqueuer_'.$key] as $deps ){
+              if( is_array($deps) ){
+                foreach($deps as $dep){
+                  $scripts['wp_enqueuer_'.$key][] = $dep;
+                }
+                //remove dependencies we just merged
+                unset($scripts['wp_enqueuer_'.$key][$count]);
+              }
+              $count++;
+            }
+
+            //remove duplicate array values
+            $scripts['wp_enqueuer_'.$key] = array_values(array_unique($scripts['wp_enqueuer_'.$key]));
+          }
         }
       }
 
@@ -267,7 +301,86 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       return false;
     }
 
-    public function front_enqueue_scripts(){
+    public function front_enqueue_deps($assets,$dependencies,$type){
+      
+      $loading_dependencies = array();
+      foreach( $assets as $key=>$asset ){
+        
+        $i = 0;
+        foreach( $dependencies as $script_name ){
+          
+          $deps = array();
+          if( $i === 0 ){
+            // add the dependencies array
+            $deps = array_values($dependencies);
+            // prevent the script that we actually want to load from listing itself as a dependent
+            unset($deps[0]);
+            $deps = array_values($deps);
+          }
+
+          if( $script_name === $asset['name'] ){
+
+            $handle = $script_name;
+            $version = $assets[$key]['version'];
+
+            if( $type === 'script' ){
+              $script_loader = array(
+                'handle'=>$handle,
+                'deps'=>$deps,
+                'version'=>$version,
+                );
+              if( $assets[$key]['host'] === "local" )
+                $source = plugin_dir_url( __FILE__ ).'assets/js/'.$assets[$key]['uri'];
+            }elseif( $type === 'style' ){
+              $script_loader = array(
+                'handle'=>$handle,
+                'deps'=>$deps,
+                'version'=>$version,
+                );
+
+              if( $assets[$key]['host'] === "local" )
+                $source = plugin_dir_url( __FILE__ ).'assets/css/'.$assets[$key]['uri'];
+            }
+
+            if( isset($source) )
+              $source = $assets[$key]['uri'];
+
+            $script_loader['source'] = $source;
+
+            $this->front_enqueue_asset($type,$script_loader);
+            // populate the dependency handle
+            $loading_dependencies[] = $handle;
+            $added_dependencies = true;
+            break;
+          }
+
+          $i++;
+        }
+
+      }
+
+      return $loading_dependencies;
+    }
+
+    public function front_enqueue_asset($type,$script_loader = array()){
+      if( $type === "script" ){
+        extract($script_loader);
+        // register script
+        wp_register_script( $handle, $source, $deps, $version, (isset($footer)?$footer:false) );
+        // enqueue script
+        wp_enqueue_script( $handle );
+      }elseif( $type === "style" ){
+        extract($script_loader);
+        // register style
+        wp_register_style( $handle, $source, $deps, $version, (isset($media)?$media:'') );
+        // enqueue style
+        wp_enqueue_style( $handle );
+      }
+
+      $loaded_scripts[] = (isset($handle)?$handle:'');
+    }
+
+    public function front_enqueue_assets(){
       $post_types = $this->get_post_types();
 
       if( !empty($post_types) ){
@@ -283,107 +396,64 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
           foreach ( $scripts['wp_enqueuer_'.$current_post_type] as $key => $script) {
             // check to see if script has any dependencies
             if( is_array($script) ){
-              //get the first key of the array (the name of the script to load)
-              reset($script);
-              $script_name = key($script);
-              //key dependencies in array
-              $dependencies = array();
-              foreach( $script[$script_name] as $dep ){
-                $dependency_found = false;
-
-                foreach( $assets['scripts'] as $key=>$asset ){
-                  if( $dep === $asset['name'] ){
-                    if( $assets['scripts'][$key]['host'] === "local" ){
-                      $source = plugin_dir_url( __FILE__ ).'assets/js/'.$assets['scripts'][$key]['uri'];
-                    }else{
-                      $source = $assets['scripts'][$key]['uri'];
-                    }
-
-                    $version = $assets['scripts'][$key]['version'];
-                    $handle = $dep;
-
-                    // register dependency
-                    wp_register_script( $handle, $source, array(),$version,false );
-                    // enqueue dependency
-                    wp_enqueue_script( $handle );
-                    $loaded_scripts[] = $handle;
-                    $dependency_found = true;
-                    break;
-                  }
-                }
-
-                if( $dependency_found === false ){
-                  foreach( $assets['styles'] as $key=>$asset ){
-                    if( $dep === $asset['name'] ){
-                      if( $assets['styles'][$key]['host'] === "local" ){
-                        $source = plugin_dir_url( __FILE__ ).'assets/css/'.$assets['styles'][$asset_key[0]]['uri'];
-                      }else{
-                        $source = $assets['styles'][$key]['uri'];
-                      }
-
-                      $version = $assets['styles'][$key]['version'];
-                      $handle = $dep;
-                      // register dependency
-                      wp_register_style( $handle, $source, '',$version );
-                      // enqueue dependency
-                      wp_enqueue_style( $handle );
-                      $loaded_scripts[] = $handle;
-                      $dependency_found = true;
-                      break;
-                    }
-                  }
-                }
-
-                $dependencies[] = $dep;
-              }
-              $script = $script_name;
-            }
-
-            $script_found = false;
-            foreach( $assets['scripts'] as $key=>$asset ){
-              if( $script === $asset['name'] ){
-                if( $asset['host'] === "local" ){
-                  $source = plugin_dir_url( __FILE__ ).'assets/js/'.$asset['uri'];
-                }else{
-                  $source = $asset['uri'];
-                }
-
-                $version = $asset['version'];
-                $handle = $script;
-
-                // register script
-                if( !isset($dependencies) )
-                  $dependencies = array();
-
-                wp_register_script( $handle, $source, $dependencies,$version,false );
-                // enqueue script
-                wp_enqueue_script( $handle );
-                $loaded_scripts[] = $handle;
-                $script_found = true;
-                break;
-              }
-            }
-
-            if( $script_found === false ){
-              foreach( $assets['styles'] as $key=>$asset ){
+              $script_deps = $this->front_enqueue_deps($assets['scripts'],$script,'script');
+              $styles_deps = $this->front_enqueue_deps($assets['styles'],$script,'style');
+              
+            }else{
+              $script_found = false;
+              foreach( $assets['scripts'] as $key=>$asset ){
                 if( $script === $asset['name'] ){
                   if( $asset['host'] === "local" ){
-                    $source = plugin_dir_url( __FILE__ ).'assets/css/'.$asset['uri'];
+                    $source = plugin_dir_url( __FILE__ ).'assets/js/'.$asset['uri'];
                   }else{
                     $source = $asset['uri'];
                   }
 
                   $version = $asset['version'];
                   $handle = $script;
-                  if( !isset($dependencies) )
-                    $dependencies = array();
-                  // register style
-                  wp_register_style( $handle, $source, $dependencies,$version );
-                  // enqueue style
-                  wp_enqueue_style( $handle );
-                  $loaded_scripts[] = $handle;
-                  $script_found = true;
+
+                  // register script
+                  if( !isset($script_deps) )
+                    $script_deps = array();
+
+                  //populate script loader with loading details
+                  $script_loader = array(
+                    'handle'=>$handle,
+                    'source'=>$source,
+                    'deps'=>(isset($script_deps)?$script_deps:array()),
+                    'version'=>$version,
+                    );
+                  $this->front_enqueue_asset('script',$script_loader);
+                  $scripts_found = true;
                   break;
+                }
+              }
+
+              if( $script_found === false ){
+                foreach( $assets['styles'] as $key=>$asset ){
+                  if( $script === $asset['name'] ){
+                    if( $asset['host'] === "local" ){
+                      $source = plugin_dir_url( __FILE__ ).'assets/css/'.$asset['uri'];
+                    }else{
+                      $source = $asset['uri'];
+                    }
+
+                    $version = $asset['version'];
+                    $handle = $script;
+                    if( !isset($styles_deps) )
+                      $styles_deps = array();
+                    
+                    //populate style loader with loading details
+                    $style_loader = array(
+                      'handle'=>$handle,
+                      'source'=>$source,
+                      'deps'=>(isset($styles_deps)?$styles_deps:array()), 
+                      'version'=>$version,
+                    );
+                    $this->front_enqueue_asset('style',$script_loader);
+                    $script_found = true;
+                    break;
+                  }
                 }
               }
             }

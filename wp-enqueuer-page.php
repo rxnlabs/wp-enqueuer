@@ -1,8 +1,6 @@
 <?php
 $wp_enqueuer = $GLOBALS['wp-enqueuer'];
-$scripts = $wp_enqueuer->get_enqueue();
-// merge dependies array into parent array
-
+$scripts = $wp_enqueuer->get_enqueue_unique();
 ?>
 <div class="wrap">
   <h2><?php _e( 'WP Enqueuer Settings' );?></h2>
@@ -39,12 +37,16 @@ $scripts = $wp_enqueuer->get_enqueue();
                 <tr>
                   <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $script->name );?>" 
                   <?php
-                  //check to see if the script was selected or is dependent of another script
+                  //check to see if the script was selected or is dependent on another script
                   if( !empty($scripts['wp_enqueuer_'.$post_type]) ){
-                      if( in_array($script->name,$scripts['wp_enqueuer_'.$post_type]) ){
-                        echo "checked";
-                      }elseif( $wp_enqueuer->in_array_r($script->name,$scripts['wp_enqueuer_'.$post_type]) ){
-                        echo "checked";
+
+                      foreach( $scripts['wp_enqueuer_'.$post_type] as $check_script ){
+
+                        if( !is_array($check_script) ){
+                          if( $check_script === $script->name )
+                            echo "checked";
+
+                        }
                       }
                     }
                     ?> class="wp_enqueuer"></td>
