@@ -7,8 +7,8 @@ $scripts = $wp_enqueuer->get_enqueue_unique();
   <?php 
   $public_post_types = $wp_enqueuer->get_post_types();
   if( !empty( $public_post_types ) ): $count = 0;?>
-  <form method="post" action="options-general.php?page=wp-enqueuer-page.php">
-    <input name="wp_enqueuer_save" class="button button-primary button-large" id="publish" accesskey="p" value="Save Settings" type="submit">
+  <form method="post" action="options-general.php?page=wp-enqueuer-page.php" id="wp_enqueuer_settings">
+    <input name="wp_enqueuer_save" class="button button-primary button-large wp_enqueuer_save" accesskey="p" value="Save Settings" type="submit">
     <div class="panel-group" id="wp_enqueuer_post_types">
       <?php foreach( $public_post_types as $post_type ):?>
       <div class="panel panel-default">
@@ -36,9 +36,9 @@ $scripts = $wp_enqueuer->get_enqueue_unique();
                 <?php foreach( $assets->scripts as $script ):?>
                 <tr>
                   <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $script->name );?>" 
-                  <?php
-                  //check to see if the script was selected or is dependent on another script
-                  if( !empty($scripts['wp_enqueuer_'.$post_type]) ){
+                    <?php
+                    //check to see if the script was selected or is dependent on another script
+                    if( !empty($scripts['wp_enqueuer_'.$post_type]) ){
 
                       foreach( $scripts['wp_enqueuer_'.$post_type] as $check_script ){
 
@@ -58,7 +58,21 @@ $scripts = $wp_enqueuer->get_enqueue_unique();
                 <?php endforeach;?>
                 <?php foreach( $assets->styles as $script ):?>
                 <tr>
-                  <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $script->name );?>"></td>
+                  <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $script->name );?>" 
+                  <?php
+                    //check to see if the script was selected or is dependent on another script
+                    if( !empty($scripts['wp_enqueuer_'.$post_type]) ){
+
+                      foreach( $scripts['wp_enqueuer_'.$post_type] as $check_script ){
+
+                        if( !is_array($check_script) ){
+                          if( $check_script === $script->name )
+                            echo "checked";
+
+                        }
+                      }
+                    }
+                    ?>></td>
                   <td><?php _e( $script->name );?></td>
                   <td><?php _e( $script->version );?></td>
                   <td><?php _e( 'CSS' );?></td>
@@ -74,7 +88,7 @@ $scripts = $wp_enqueuer->get_enqueue_unique();
       <?php endforeach;?>
     </div>
     <?php wp_nonce_field( 'wp_enqueuer_save_settings', 'wp_enqueuer_settings' );?>
-    <input name="wp_enqueuer_save" class="button button-primary button-large" id="publish" accesskey="p" value="Save Settings" type="submit">
+    <input name="wp_enqueuer_save" class="button button-primary button-large wp_enqueuer_save" accesskey="p" value="Save Settings" type="submit">
   </form>
   <?php endif;?>
 </div>
