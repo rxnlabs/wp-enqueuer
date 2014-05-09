@@ -330,6 +330,18 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
             if( $asset['host'] === "local" )
               $source = plugin_dir_url( __FILE__ ).'assets/js/'.$asset['uri'];
 
+            // check to see if the script has any styles that come with it
+            if( isset($asset['styles']) ){
+              foreach($asset['styles'] as $script_style ){
+                $script_style_loader = array(
+                  'handle'=>$handle,
+                  'deps'=>array(),
+                  'version'=>$version,
+                  'source'=>$script_style['uri']
+                  );
+                $this->front_enqueue_asset('styles',$script_style_loader);
+              }
+            }
           }elseif( $type === 'styles' ){
             $script_loader = array(
               'handle'=>$handle,
@@ -401,7 +413,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
                   $script_deps = $this->front_enqueue_deps($dep,'styles');
                 }
               }
-              // now set the script we wanted to load
+              // now set the script we wanted to load after we've loaded the dependencies
               $script = $needed_script;
             }
 
@@ -430,7 +442,21 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
                     'deps'=>$deps,
                     'version'=>$version,
                     );
+
                   $this->front_enqueue_asset('scripts',$script_loader);
+
+                  if( isset($asset['styles']) ){
+                    foreach($asset['styles'] as $script_style ){
+                      $script_style_loader = array(
+                        'handle'=>$handle,
+                        'deps'=>array(),
+                        'version'=>$version,
+                        'source'=>$script_style['uri']
+                        );
+                      $this->front_enqueue_asset('styles',$script_style_loader);
+                    }
+                  }
+                  
                   $scripts_found = true;
                   break;
                 }
@@ -456,7 +482,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
                         'deps'=>$deps, 
                         'version'=>$version,
                       );
-                      $this->front_enqueue_asset('styles',$script_loader);
+                      $this->front_enqueue_asset('styles',$style_loader);
                       $script_found = true;
                       break;
                     }
