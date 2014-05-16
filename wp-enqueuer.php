@@ -48,6 +48,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
     private $version;
     private $loaded_scripts;
     private $loaded_styles;
+    private $dep_scripts;
 
     /**
      * Prefix for all keys in the plugin
@@ -63,7 +64,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       //hold list of enqueued scripts so we don't enqueue them twice
       $this->loaded_scripts = array();
       $this->loaded_styles = array();
-
+      $this->dep_scripts = array();
       //load WordPress hooks
       $this->admin_hooks();
       $this->front_hooks();
@@ -148,6 +149,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       $enqueue = array($script_name);
       foreach( $dependencies as $dep ){
         $enqueue[] = $dep['name'];
+        $this->dep_scripts[] = $dep['name'];
       }
       
       return $enqueue;
@@ -156,7 +158,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
     public function set_enqueue(){
       if( $_GET['page'] === "wp-enqueuer-page.php" ){
         if( isset($_POST) AND !empty($_POST) AND array_filter($_POST) != false AND is_admin() AND check_admin_referer('wp_enqueuer_save_settings','wp_enqueuer_settings') ){
-          
+          var_dump($_POST);
           // don't autosave
           if( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) return;
 
@@ -173,7 +175,6 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
               $wp_enqueuer_footer = $_POST[$this->prefix.$key.'_footer'];
 
               if( !empty($wp_enqueuer) ){
-                $scripts_load = array();
                 $count =0;
                 foreach( $wp_enqueuer as $script_name ){
                   $dependency_found = false;
@@ -192,7 +193,8 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
                     }
                   }
 
-                  $scripts_load[] = $script_name;
+                  if( )
+                  $this->loaded_scripts[] = $script_name;
                   
                   $count++;
                 } 
@@ -203,16 +205,21 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
               if( !empty($wp_enqueuer_footer) ){
                 foreach($wp_enqueuer_footer as $load_footer ){
                   // before we add the script to be loaded in the footer, search the list of scripts that are being loaded for the post type
-                  if( $this->in_array_r($load_footer,$scripts_load) )
+                  if( $this->in_array_r($load_footer,$this->loaded_scripts) )
                     $scripts_load_footer[] = $load_footer;
                 }
               }
+var_dump($this->loaded_scripts);
+              die(var_dump(array_unique($this->loaded_scripts)));
 
-              $result = update_option( $this->prefix.$key, (isset($scripts_load)?$scripts_load:null);
-              $result = update_option( $this->prefix.$key.'_footer', (isset($scripts_load_footer)?$scripts_load_footer:null) );
+              //remove duplicate keys from array (using array_unique causes multidimensional array to be removed)
+              foreach ($this->loaded_scripts as $key => $value) {
+                
+              }
+              $result = update_option( $this->prefix.$key, (!empty($this->loaded_scripts)?$this->loaded_scripts:null) );
+              //$result = update_option( $this->prefix.$key.'_footer', (isset($scripts_load_footer)?$scripts_load_footer:null) );
             }
           }
-
           return $set_enqueue;
         }
       }

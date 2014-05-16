@@ -89,3 +89,23 @@
   border-left: 1px solid #ccc;
   margin-bottom: 0;
 }
+
+/* 
+   TABLE
+   ========================================================================== */
+#wp_enqueuer_settings_page .dataTables_wrapper .dataTables_paginate a{
+  display: inline-block;
+  padding: 5px 10px;
+}
+
+#wp_enqueuer_settings_page .dataTables_wrapper .dataTables_paginate a.paginate_button:active,
+#wp_enqueuer_settings_page .dataTables_wrapper .dataTables_paginate a.paginate_button:hover,
+#wp_enqueuer_settings_page .dataTables_wrapper .dataTables_paginate a.paginate_button:focus{
+  background: #2EA2CC;
+  color: #fff;
+}
+
+#wp_enqueuer_settings_page .dataTables_wrapper .dataTables_paginate span a.paginate_active{
+  background: #999999;
+  color: #fff;
+}

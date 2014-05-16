@@ -42,7 +42,7 @@ $scripts = $wp_enqueuer->get_enqueue_unique();
                 <th data-class="expand"><?php _e( 'Type' );?></th>
                 <th><?php _e( 'Host' );?></th>
                 <th data-hide="phone,tablet"><?php _e( 'Deps' );?></th>
-                <th data-hide="phone,tablet"><?php _e( 'Footer' );?></th>
+                <th data-sort-ignore="true"><?php _e( 'Footer' );?></th>
               </tr>
             </thead>
             <?php
