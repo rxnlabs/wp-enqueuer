@@ -33,14 +33,33 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
  
   class WP_Enqueuer {
     
+    /**
+     * File name that stores available scripts
+     *
+     * @var string
+     */
     private $script_file;
+
+    /**
+     * Store version of the plugin
+     *
+     * @var string
+     */
     private $version;
     private $loaded_scripts;
     private $loaded_styles;
 
+    /**
+     * Prefix for all keys in the plugin
+     *
+     * @var string
+     */
+    private $prefix;
+
     public function __construct() {
       $this->script_file = 'wp-enqueuer-scripts.json';
       $this->version = '1.0a';
+      $this->prefix = 'wp_enqueuer_';
       //hold list of enqueued scripts so we don't enqueue them twice
       $this->loaded_scripts = array();
       $this->loaded_styles = array();
@@ -150,8 +169,9 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
           if( !empty($post_types) ){
             $set_enqueue = array();
             foreach( $post_types as $key=>$value ){
-              $wp_enqueuer = $_POST['wp_enqueuer_'.$key];
-              $scripts_load = null;
+              $wp_enqueuer = $_POST[$this->prefix.$key];
+              $wp_enqueuer_footer = $_POST[$this->prefix.$key.'_footer'];
+
               if( !empty($wp_enqueuer) ){
                 $scripts_load = array();
                 $count =0;
@@ -179,7 +199,17 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
                 
                 $set_enqueue[$key] = $result;
               }
-              $result = update_option( 'wp_enqueuer_'.$key, $scripts_load);
+
+              if( !empty($wp_enqueuer_footer) ){
+                foreach($wp_enqueuer_footer as $load_footer ){
+                  // before we add the script to be loaded in the footer, search the list of scripts that are being loaded for the post type
+                  if( $this->in_array_r($load_footer,$scripts_load) )
+                    $scripts_load_footer[] = $load_footer;
+                }
+              }
+
+              $result = update_option( $this->prefix.$key, (isset($scripts_load)?$scripts_load:null);
+              $result = update_option( $this->prefix.$key.'_footer', (isset($scripts_load_footer)?$scripts_load_footer:null) );
             }
           }
 
@@ -195,19 +225,26 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       if( !empty($post_types) AND is_null($post_type) ){
         $scripts = array();
         foreach( $post_types as $key=>$value ){
-          if ( get_option( 'wp_enqueuer_'.$key ) !== false ) {
-            $scripts['wp_enqueuer_'.$key] = get_option( 'wp_enqueuer_'.$key );
+          if ( get_option( $this->prefix.$key ) !== false ) {
+            $scripts[$this->prefix.$key] = get_option( $this->prefix.$key );
           }
         }
       }elseif( !is_null($post_type) ){
-        if ( get_option( 'wp_enqueuer_'.$post_type ) !== false ) {
-          $scripts['wp_enqueuer_'.$post_type] = get_option( 'wp_enqueuer_'.$post_type );
+        if ( get_option( $this->prefix.$post_type ) !== false ) {
+          $scripts[$this->prefix.$post_type] = get_option( $this->prefix.$post_type );
         }
       }
 
       return $scripts;
     }
 
+    /**
+     * Get the scripts the user wanted to load
+     *
+     * Loop through list of scripts the user selected to download, return multidimensional associative array
+     *
+     * @return array|false multidimensional associative array or false if no scripts selected
+     */
     public function get_enqueue_unique(){
       $post_types = $this->get_post_types();
 
@@ -215,24 +252,47 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       if( !empty($post_types) AND is_null($post_type) ){
         $scripts = array();
         foreach( $post_types as $key=>$value ){
-          if ( get_option( 'wp_enqueuer_'.$key ) !== false AND !empty(get_option( 'wp_enqueuer_'.$key )) ) {
-            $scripts['wp_enqueuer_'.$key] = get_option( 'wp_enqueuer_'.$key );
+          if ( get_option( $this->prefix.$key ) !== false AND !empty(get_option( $this->prefix.$key )) ) {
+            $scripts[$this->prefix.$key] = get_option( $this->prefix.$key );
             
             $count = 0;
-            //loop through array to merge dependecines into one array
-            foreach( $scripts['wp_enqueuer_'.$key] as $deps ){
+            //loop through array to merge dependencies into one array
+            foreach( $scripts[$this->prefix.$key] as $deps ){
               if( is_array($deps) ){
                 foreach($deps as $dep){
-                  $scripts['wp_enqueuer_'.$key][] = $dep;
+                  $scripts[$this->prefix.$key][] = $dep;
                 }
                 //remove dependencies we just merged
-                unset($scripts['wp_enqueuer_'.$key][$count]);
+                unset($scripts[$this->prefix.$key][$count]);
               }
               $count++;
             }
 
             //remove duplicate array values
-            $scripts['wp_enqueuer_'.$key] = array_values(array_unique($scripts['wp_enqueuer_'.$key]));
+            $scripts[$this->prefix.$key] = array_values(array_unique($scripts[$this->prefix.$key]));
+          }
+        }
+      }
+
+      return $scripts;
+    }
+
+    /**
+     * Get the names of scripts that load in the footer
+     *
+     * If the user selected the script to load in the footer, get the script name
+     *
+     * @return array|bool multidimensional associative array or false if no scripts are loading in the footer
+     */
+    public function get_enqueue_footer(){
+      $post_types = $this->get_post_types();
+
+      $scripts = false;
+      if( !empty($post_types) AND is_null($post_type) ){
+        $scripts = array();
+        foreach( $post_types as $key=>$value ){
+          if ( get_option( $this->prefix.$key.'_footer' ) !== false AND !empty(get_option( $this->prefix.$key.'_footer' )) ) {
+            $scripts[$this->prefix.$key.'_footer'] = get_option( $this->prefix.$key.'_footer' );
           }
         }
       }
@@ -491,7 +551,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
           // load the script loader file
           $assets = json_decode(json_encode($this->get_assets_file()),true);
 
-          foreach ( $scripts['wp_enqueuer_'.$current_post_type] as $key => $script) {
+          foreach ( $scripts[$this->prefix.$current_post_type] as $key => $script) {
             
             // check to see if script has any dependencies
             if( is_array($script) ){

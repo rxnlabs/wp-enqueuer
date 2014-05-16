@@ -42,6 +42,7 @@ $scripts = $wp_enqueuer->get_enqueue_unique();
                 <th data-class="expand"><?php _e( 'Type' );?></th>
                 <th><?php _e( 'Host' );?></th>
                 <th data-hide="phone,tablet"><?php _e( 'Deps' );?></th>
+                <th data-hide="phone,tablet"><?php _e( 'Footer' );?></th>
               </tr>
             </thead>
             <?php
@@ -83,6 +84,21 @@ $scripts = $wp_enqueuer->get_enqueue_unique();
                   }
                   ?>
                 </td>
+                <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>_footer[]" value="<?php _e( 'true' );?>" 
+                  <?php
+                  //check to see if the script was selected or is dependent on another script
+                  if( !empty($scripts['wp_enqueuer_'.$post_type.'_footer']) ){
+
+                    foreach( $scripts['wp_enqueuer_'.$post_type.'_footer'] as $check_footer ){
+
+                      if( !is_array($check_footer) ){
+                        if( $check_footer === $script->name )
+                          echo "checked";
+
+                      }
+                    }
+                  }
+                  ?> class="wp_enqueuer"></td>
               </tr>
               <?php endforeach;?>
               <?php foreach( $assets->styles as $script ):?>
@@ -120,6 +136,7 @@ $scripts = $wp_enqueuer->get_enqueue_unique();
                   }
                   ?>
                 </td>
+                <td></td>
               </tr>
               <?php endforeach;?>
             </tbody>
