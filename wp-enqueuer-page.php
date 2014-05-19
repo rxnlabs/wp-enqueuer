@@ -1,6 +1,6 @@
 <?php
 $wp_enqueuer = $GLOBALS['wp-enqueuer'];
-$scripts = $wp_enqueuer->get_enqueue_unique();
+$scripts = $wp_enqueuer->get_enqueue();
 ?>
 <div class="wrap" id="wp_enqueuer_settings_page">
   <h2><?php _e( 'WP Enqueuer Settings' );?></h2>
@@ -49,24 +49,19 @@ $scripts = $wp_enqueuer->get_enqueue_unique();
             $assets = $wp_enqueuer->get_assets_file();
             if( !empty($assets) ):?>
             <tbody>
-              <?php foreach( $assets->scripts as $script ):?>
+              <?php foreach( $assets->scripts as $key=>$script ):?>
               <tr>
-                <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $script->name );?>" 
+                <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $key.'_scripts' );?>" 
                   <?php
                   //check to see if the script was selected or is dependent on another script
                   if( !empty($scripts['wp_enqueuer_'.$post_type]) ){
 
-                    foreach( $scripts['wp_enqueuer_'.$post_type] as $check_script ){
-
-                      if( !is_array($check_script) ){
-                        if( $check_script === $script->name )
-                          echo "checked";
-
+                    if( array_key_exists($key, $scripts['wp_enqueuer_'.$post_type]) ){
+                        echo "checked";
                       }
-                    }
                   }
                   ?> class="wp_enqueuer"></td>
-                <td><?php _e( $script->name );?></td>
+                <td><?php _e( $key );?></td>
                 <td><?php _e( $script->version );?></td>
                 <td><?php _e( 'Javascript' );?></td>
                 <td><?php _e( $script->host );?></td>
@@ -89,36 +84,26 @@ $scripts = $wp_enqueuer->get_enqueue_unique();
                   //check to see if the script was selected or is dependent on another script
                   if( !empty($scripts['wp_enqueuer_'.$post_type.'_footer']) ){
 
-                    foreach( $scripts['wp_enqueuer_'.$post_type.'_footer'] as $check_footer ){
-
-                      if( !is_array($check_footer) ){
-                        if( $check_footer === $script->name )
-                          echo "checked";
-
+                    if( array_key_exists($key, $scripts['wp_enqueuer_'.$post_type.'_footer']) ){
+                        echo "checked";
                       }
-                    }
                   }
                   ?> class="wp_enqueuer"></td>
               </tr>
               <?php endforeach;?>
-              <?php foreach( $assets->styles as $script ):?>
+              <?php foreach( $assets->styles as $key=>$script ):?>
               <tr>
-                <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $script->name );?>" 
+                <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $key.'_styles' );?>" 
                 <?php
                   //check to see if the script was selected or is dependent on another script
                   if( !empty($scripts['wp_enqueuer_'.$post_type]) ){
 
-                    foreach( $scripts['wp_enqueuer_'.$post_type] as $check_script ){
-
-                      if( !is_array($check_script) ){
-                        if( $check_script === $script->name )
-                          echo "checked";
-
+                    if( array_key_exists($key, $scripts['wp_enqueuer_'.$post_type]) ){
+                        echo "checked";
                       }
-                    }
                   }
                   ?>></td>
-                <td><?php _e( $script->name );?></td>
+                <td><?php _e( $key );?></td>
                 <td><?php _e( $script->version );?></td>
                 <td><?php _e( 'CSS' );?></td>
                 <td><?php _e( $script->host );?></td>
