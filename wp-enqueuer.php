@@ -171,6 +171,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
               $wp_enqueuer = $_POST[$this->prefix.$key];
               $load_in_footer = $_POST[$this->prefix.$key.'_footer'];
               $load_deps = $_POST[$this->prefix.$key.'_deps'];
+
               if( !empty($wp_enqueuer) ){
 
                 foreach( $wp_enqueuer as $script_name ){
@@ -179,13 +180,14 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
                   $type = $asset_details[$length];
                   // remove the asset type from the asset details array
                   unset($asset_details[$length]);
-                  $asset_details = implode('',$asset_details);
-                  $script_name = $type[0];
+                  $script_name = implode('_',$asset_details);
                   $this->loaded_scripts[$script_name] = array(
-                      'footer'=>(!empty($load_in_footer[$script_name])?false:true),
-                      'deps'=>(!empty($load_deps[$script_name])?true:false),
+                      'deps'=>(!empty($load_deps) AND in_array($script_name,$load_deps)?true:false),
                       'type'=>$type
                     );
+
+                  if( !empty($load_in_footer) AND in_array($script_name,$load_in_footer ) )
+                    $this->loaded_scripts[$script_name]['footer'] = true;
                 }
                 
               }
@@ -439,63 +441,42 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       return false;
     }
 
-    public function front_enqueue_deps($dependencies,$type){
+    public function front_enqueue_deps($dependencies,$type,$footer = true){
       $assets = json_decode(json_encode($this->get_assets_file()),true);
 
-      foreach( $assets[$type] as $key=>$asset ){
-        $deps = array();
-        if( is_array($dependencies) ){
-          foreach( $dependencies as $load_more_deps ){
-            $this->front_enqueue_deps($load_more_deps,$type);
-          }
-          break;
-        }else{
-
-          $handle = $asset[$key];
-          $version = $asset['version'];
-
-          if( $type === 'scripts' ){
-            $script_loader = array(
-              'handle'=>$handle,
-              'deps'=>$deps,
-              'version'=>$version,
-              );
-            if( $asset['host'] === "local" )
-              $source = plugin_dir_url( __FILE__ ).'assets/js/'.$asset['uri'];
-
-            // check to see if the script has any styles that come with it
-            if( isset($asset['styles']) ){
-              foreach($asset['styles'] as $script_style ){
-                $script_style_loader = array(
-                  'handle'=>$handle,
-                  'deps'=>array(),
-                  'version'=>$version,
-                  'source'=>$script_style['uri']
-                  );
-                $this->front_enqueue_asset('styles',$script_style_loader);
-              }
-            }
-          }elseif( $type === 'styles' ){
-            $script_loader = array(
-              'handle'=>$handle,
-              'deps'=>$deps,
-              'version'=>$version,
-              );
-
-            if( $asset['host'] === "local" )
-              $source = plugin_dir_url( __FILE__ ).'assets/css/'.$asset['uri'];
-
-          }
-
-          if( !isset($source) )
-            $source = $asset['uri'];
-
-          $script_loader['source'] = $source;
-
-          $this->front_enqueue_asset($type,$script_loader);
-          break;
+      $deps = array();
+      if( is_array($dependencies) ){
+        foreach( $dependencies as $load_more_deps ){
+          $this->front_enqueue_deps($load_more_deps,$type);
         }
+      }else{
+        $handle = $dependencies;
+        $version = $assets[$type][$dependencies]['version'];
+        $script_loader = array(
+          'handle'=>$handle,
+          'deps'=>$deps,
+          'version'=>$version,
+          );
+        if( $assets[$type][$dependencies]['host'] === "local" )
+          $source = plugin_dir_url( __FILE__ ).'assets/js/'.$assets[$type][$dependencies]['uri'];
+        else
+          $source = $assets[$type][$dependencies]['uri'];
+        
+        $script_loader['source'] = $source;
+        $this->front_enqueue_asset($type,$script_loader);
 
+        // check to see if the script has any styles that come with it
+        if( isset($assets[$type][$dependencies]['styles']) ){
+          foreach($assets[$type][$dependencies]['styles'] as $script_style ){
+            $script_style_loader = array(
+              'handle'=>$handle,
+              'deps'=>array(),
+              'version'=>$version,
+              'source'=>$script_style['uri']
+              );
+            $this->front_enqueue_asset('styles',$script_style_loader);
+          }
+        }
       }
 
     }
@@ -530,45 +511,56 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
           // load the script loader file
           $assets = json_decode(json_encode($this->get_assets_file()),true);
 
-          foreach ( $scripts[$this->prefix.$current_post_type] as $key => $script) {
+          foreach ( $scripts[$this->prefix.$current_post_type] as $script_name => $script) {
             
             $script_deps = array();
+            // loop through and grab dependencies
+            if( is_array($assets[$script['type']][$script_name]['deps'])){
+              foreach( $assets[$script['type']][$script_name]['deps'] as $dep ){
+                $script_deps[] = $dep['name'];
+              }
+            }
+
             // check to see if we want to load the dependencies
-            if( $script['deps'] != false ){
-              foreach( $script as $dep ){
+            if( $script['deps'] != false AND !empty($script_deps) ){
+              // loop through dependencies to load them
+              foreach( $script_deps as $dep ){
                 // check to see if the dependencies have been loaded already
                 if( !in_array($dep,$this->loaded_scripts) OR !in_array($dep,$this->loaded_styles) ){
-                  $script_deps = $this->front_enqueue_deps($dep,'scripts');
-                  $script_deps = $this->front_enqueue_deps($dep,'styles');
+                  $this->front_enqueue_deps($dep,$script['type']);
                 }
               }
             }
 
             // load the main script
-            $handle = $assets['scripts'][$script];
+            $handle = $script_name;
             $script_loader = array(
               'handle'=>$handle,
               'deps'=>$script_deps,
-              'version'=>$assets['scripts'][$script]['version'],
+              'version'=>$assets[$script['type']][$script_name]['version']
               );
 
-            if( $assets['scripts'][$script]['host'] === "local" )
-              $source = plugin_dir_url( __FILE__ ).'assets/js/'.$assets['scripts'][$script]['uri'];
+            if( $assets[$script['type']][$script_name]['host'] === "local" )
+              $source = plugin_dir_url( __FILE__ ).'assets/js/'.$assets[$script['type']][$script_name]['uri'];
             else
-              $source = $assets['scripts'][$script]['uri'];
+              $source = $assets[$script['type']][$script_name]['uri'];
 
             $script_loader['source'] = $source;
-            $this->front_enqueue_asset('scripts',$script_loader);
+
+            if( isset($script['footer']) )
+              $script_loader['footer'] = $script['footer'];
+
+            $this->front_enqueue_asset($script['type'],$script_loader);
 
             // check to see if the script has any styles that come with it
-            if( isset($assets['scripts'][$script]['styles']) ){
-              foreach($assets['scripts'][$script]['styles'] as $script_style ){
-                $handle = $assets['scripts'][$script];
+            if( isset($assets[$script['type']][$script_name]['styles']) ){
+              foreach($assets[$script['type']][$script_name]['styles'] as $script_style ){
+                $handle = $script_name;
 
                 $style_loader = array(
                   'handle'=>$handle,
                   'deps'=>array(),
-                  'version'=>$assets['scripts'][$script]['version'],
+                  'version'=>$script_loader['version'],
                   'source'=>$script_style['uri']
                   );
                 $this->front_enqueue_asset('styles',$style_loader);

@@ -42,6 +42,7 @@ $scripts = $wp_enqueuer->get_enqueue();
                 <th data-class="expand"><?php _e( 'Type' );?></th>
                 <th><?php _e( 'Host' );?></th>
                 <th data-hide="phone,tablet"><?php _e( 'Deps' );?></th>
+                <th data-hide="phone,tablet"><?php _e( 'Dont\'t Load Deps' );?></th>
                 <th data-sort-ignore="true"><?php _e( 'Footer' );?></th>
               </tr>
             </thead>
@@ -79,7 +80,17 @@ $scripts = $wp_enqueuer->get_enqueue();
                   }
                   ?>
                 </td>
-                <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>_footer[]" value="<?php _e( 'true' );?>" 
+                <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>_deps[]" value="<?php _e( $key );?>" 
+                  <?php
+                  //check to see if the script was selected 
+                  if( !empty($scripts['wp_enqueuer_'.$post_type.'_deps']) ){
+
+                    if( array_key_exists($key, $scripts['wp_enqueuer_'.$post_type.'_deps']) ){
+                        echo "checked";
+                      }
+                  }
+                  ?> class="wp_enqueuer"></td>
+                <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>_footer[]" value="<?php _e( $key );?>" 
                   <?php
                   //check to see if the script was selected or is dependent on another script
                   if( !empty($scripts['wp_enqueuer_'.$post_type.'_footer']) ){
@@ -95,7 +106,7 @@ $scripts = $wp_enqueuer->get_enqueue();
               <tr>
                 <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>[]" value="<?php _e( $key.'_styles' );?>" 
                 <?php
-                  //check to see if the script was selected or is dependent on another script
+                  //check to see if the script was selected
                   if( !empty($scripts['wp_enqueuer_'.$post_type]) ){
 
                     if( array_key_exists($key, $scripts['wp_enqueuer_'.$post_type]) ){
@@ -121,6 +132,16 @@ $scripts = $wp_enqueuer->get_enqueue();
                   }
                   ?>
                 </td>
+                <td><input type="checkbox" name="wp_enqueuer_<?php _e( $post_type );?>_deps[]" value="<?php _e( $key );?>" 
+                  <?php
+                  //check to see if the script was selected 
+                  if( !empty($scripts['wp_enqueuer_'.$post_type.'_deps']) ){
+
+                    if( array_key_exists($key, $scripts['wp_enqueuer_'.$post_type.'_deps']) ){
+                        echo "checked";
+                      }
+                  }
+                  ?> class="wp_enqueuer"></td></td>
                 <td></td>
               </tr>
               <?php endforeach;?>
