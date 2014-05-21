@@ -522,7 +522,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
             }
 
             // check to see if we want to load the dependencies
-            if( $script['deps'] != false AND !empty($script_deps) ){
+            if( $script['deps'] === false AND !empty($script_deps) ){
               // loop through dependencies to load them
               foreach( $script_deps as $dep ){
                 // check to see if the dependencies have been loaded already
