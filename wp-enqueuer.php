@@ -441,7 +441,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       return false;
     }
 
-    public function front_enqueue_deps($dependencies,$type,$footer = true){
+    public function front_enqueue_deps($dependencies,$type,$footer = false){
       $assets = json_decode(json_encode($this->get_assets_file()),true);
 
       $deps = array();
@@ -463,6 +463,8 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
           $source = $assets[$type][$dependencies]['uri'];
         
         $script_loader['source'] = $source;
+        if( $footer === true )
+          $script_loader['footer'] = $footer;
         $this->front_enqueue_asset($type,$script_loader);
 
         // check to see if the script has any styles that come with it
@@ -523,11 +525,14 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
 
             // check to see if we want to load the dependencies
             if( $script['deps'] === false AND !empty($script_deps) ){
+              // check if the main script is loading in the footer
+              if( isset($script['footer']) )
+                $footer = true;
               // loop through dependencies to load them
               foreach( $script_deps as $dep ){
-                // check to see if the dependencies have been loaded already
-                if( !in_array($dep,$this->loaded_scripts) OR !in_array($dep,$this->loaded_styles) ){
-                  $this->front_enqueue_deps($dep,$script['type']);
+                /* check to see if the dependencies have been loaded already AND if the dependent script is not a main script (prevents the dependent script from loading in the footer [if the user selected the main script to load in the footer], if the user selected this same script to load in the header)*/
+                if( (!in_array($dep,$this->loaded_scripts) OR !in_array($dep,$this->loaded_styles)) AND !array_key_exists($dep, $scripts[$this->prefix.$current_post_type]) ){
+                  $this->front_enqueue_deps($dep,$script['type'],$footer);
                 }
               }
             }
