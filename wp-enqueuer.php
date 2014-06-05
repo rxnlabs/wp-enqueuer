@@ -74,7 +74,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       add_action( 'admin_menu', array(&$this,'settings_page') );
       add_action( 'admin_enqueue_scripts', array(&$this,'admin_enqueue') );
       add_action( 'admin_init', array( $this, 'set_enqueue' ) );
-      add_action( 'admin_head', array( $this, 'admin_enqueue_scripts_after' ) );  
+      add_action( 'admin_head', array( $this, 'admin_enqueue_scripts_after' ) );
     }
 
     public function front_hooks(){
@@ -346,72 +346,74 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
     }
 
     public function admin_enqueue_scripts_after(){
-      //add responsive datatables to each post type
-      $responsive_code = 'var breakpointDefinition = {
-            tablet: 1024,
-            phone : 480
-        };';
-      foreach($this->get_post_types() as $datatables ){
-        $responsive_code .= 'var responsiveHelper_'.$datatables.' = undefined;
-        var wp_enqueuer_'.$datatables.' = $(\'#wp_enqueuer_datatables_'.$datatables.'\');
-        wp_enqueuer_'.$datatables.'.dataTable({
-          "aaSorting": [
-            [1,\'asc\']
-          ],
-          "sPaginationType": "full_numbers",
-          //disable sorting on first column
-          "aoColumnDefs" : [ 
-            {
-              \'bSortable\' : false,
-              \'aTargets\' : [ 0 ]
-            },
-            {
-              \'asSorting\': [ \'asc\' ],
-              \'aTargets\': [ 1 ]
-            }
-          ],
-          bAutoWidth: false,
-          fnPreDrawCallback: function () {
-              // Initialize the responsive datatables helper once.
-              if (!responsiveHelper_'.$datatables.') {
-                  responsiveHelper_'.$datatables.' = new ResponsiveDatatablesHelper(wp_enqueuer_'.$datatables.', breakpointDefinition);
+      if($_GET['page'] == 'wp-enqueuer-page.php'){
+        //add responsive datatables to each post type
+        $responsive_code = 'var breakpointDefinition = {
+              tablet: 1024,
+              phone : 480
+          };';
+        foreach($this->get_post_types() as $datatables ){
+          $responsive_code .= 'var responsiveHelper_'.$datatables.' = undefined;
+          var wp_enqueuer_'.$datatables.' = $(\'#wp_enqueuer_datatables_'.$datatables.'\');
+          wp_enqueuer_'.$datatables.'.dataTable({
+            "aaSorting": [
+              [1,\'asc\']
+            ],
+            "sPaginationType": "full_numbers",
+            //disable sorting on first column
+            "aoColumnDefs" : [ 
+              {
+                \'bSortable\' : false,
+                \'aTargets\' : [ 0 ]
+              },
+              {
+                \'asSorting\': [ \'asc\' ],
+                \'aTargets\': [ 1 ]
               }
-          },
-          fnRowCallback  : function (nRow) {
-              responsiveHelper_'.$datatables.'.createExpandIcon(nRow);
-          },
-          fnDrawCallback : function (oSettings) {
-              responsiveHelper_'.$datatables.'.respond();
-          },
-        });
-        //save the scripts the user enqueued when datatables pagination is enabled and the fields we selected are not on the current page
-        $(document).on(\'click\',\'.wp_enqueuer_save\',function(){
-          var data = wp_enqueuer_'.$datatables.'.$(\'input\').serializeArray();
-          var append_fields;
-          for( var i = 0; i < data.length; i++ ){
-            if( typeof append_fields == \'undefined\' ){
-              append_fields = \'<input type="hidden" name="\'+ data[i].name + \'" value="\'+ data[i].value+\'">\'; 
-            }else{
-              append_fields += \'<input type="hidden" name="\'+ data[i].name + \'" value="\'+ data[i].value+\'">\'; 
-            }
-          }
-          $(\'#wp_enqueuer_settings_form\').append(append_fields);
-        });
-';
-        
-      }?>
-      <script type='text/javascript'>
-      /* <![CDATA[ */
-      <!--START WP ENQUEUER JAVASCRIPT-->
-        if (window.jQuery) {
-          jQuery(document).ready(function($){
-            <?php echo $responsive_code;?>
+            ],
+            bAutoWidth: false,
+            fnPreDrawCallback: function () {
+                // Initialize the responsive datatables helper once.
+                if (!responsiveHelper_'.$datatables.') {
+                    responsiveHelper_'.$datatables.' = new ResponsiveDatatablesHelper(wp_enqueuer_'.$datatables.', breakpointDefinition);
+                }
+            },
+            fnRowCallback  : function (nRow) {
+                responsiveHelper_'.$datatables.'.createExpandIcon(nRow);
+            },
+            fnDrawCallback : function (oSettings) {
+                responsiveHelper_'.$datatables.'.respond();
+            },
           });
-        }
-        <!--END WP ENQUEUER JAVASCRIPT
-      /* ]]> */
-      </script>
+          //save the scripts the user enqueued when datatables pagination is enabled and the fields we selected are not on the current page
+          $(document).on(\'click\',\'.wp_enqueuer_save\',function(){
+            var data = wp_enqueuer_'.$datatables.'.$(\'input\').serializeArray();
+            var append_fields;
+            for( var i = 0; i < data.length; i++ ){
+              if( typeof append_fields == \'undefined\' ){
+                append_fields = \'<input type="hidden" name="\'+ data[i].name + \'" value="\'+ data[i].value+\'">\'; 
+              }else{
+                append_fields += \'<input type="hidden" name="\'+ data[i].name + \'" value="\'+ data[i].value+\'">\'; 
+              }
+            }
+            $(\'#wp_enqueuer_settings_form\').append(append_fields);
+          });
+  ';
+          
+        }?>
+        <script type='text/javascript'>
+        /* <![CDATA[ */
+        <!--START WP ENQUEUER JAVASCRIPT-->
+          if (window.jQuery) {
+            jQuery(document).ready(function($){
+              <?php echo $responsive_code;?>
+            });
+          }
+          <!--END WP ENQUEUER JAVASCRIPT
+        /* ]]> */
+        </script>
       <?php
+      }
     }
 
     public function in_array_r($needle, $haystack, $strict = false) {
