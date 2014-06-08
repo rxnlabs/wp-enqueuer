@@ -219,6 +219,11 @@
       "host": "cdn",
       "version": "1.0",
       "uri": "//cdnjs.cloudflare.com/ajax/libs/960gs/0/960.min.css"
+    },
+    "unsemantic": {
+      "host": "cdn",
+      "version": "rc0",
+      "uri": "//cdnjs.cloudflare.com/ajax/libs/unsemantic/0/unsemantic-grid-responsive.css"
     }
   }
 }
