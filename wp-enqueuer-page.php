@@ -41,8 +41,7 @@ $scripts = $wp_enqueuer->get_enqueued_scripts();
                 <th data-hide="phone,tablet"><?php _e( 'Version' );?></th>
                 <th data-class="expand"><?php _e( 'Type' );?></th>
                 <th><?php _e( 'Host' );?></th>
-                <th data-hide="phone,tablet"><?php _e( 'Deps' );?></th>
-                <th data-hide="phone,tablet"><?php _e( 'Dont\'t Load Deps' );?></th>
+                <th data-hide="phone,tablet"><?php _e( 'Load Deps' );?></th>
                 <th data-sort-ignore="true"><?php _e( 'Footer' );?></th>
               </tr>
             </thead>
@@ -69,8 +68,20 @@ $scripts = $wp_enqueuer->get_enqueued_scripts();
                 <td>
                   <?php
                   $dep = "None";
-                  if( isset($script->deps) ){
-                    echo "<ul>";
+                  if( isset($script->deps) ){?>
+                    <input type="checkbox" name="<?php _e($wp_enqueuer->prefix);?><?php _e( $post_type );?>_deps[]" value="<?php _e( $key );?>" id="<?php _e($wp_enqueuer->prefix);?><?php _e( $post_type );?>_<?php _e( $key );?>" 
+                    <?php
+                    //check to see if the script was selected 
+                    if( !empty($scripts[$wp_enqueuer->prefix.$post_type.'_deps']) ){
+
+                      if( array_key_exists($key, $scripts[$wp_enqueuer->prefix.$post_type.'_deps']) ){
+                          echo "checked";
+                        }
+                    }
+                    ?>
+                    ><label for="<?php _e($wp_enqueuer->prefix);?><?php _e( $post_type );?>_<?php _e( $key );?>">No</label>
+                    <ul>
+                    <?php
                     foreach($script->deps as $dep){
                       _e( "<li>".$dep->name."</li>" );
                     }
@@ -80,16 +91,6 @@ $scripts = $wp_enqueuer->get_enqueued_scripts();
                   }
                   ?>
                 </td>
-                <td><input type="checkbox" name="<?php _e($wp_enqueuer->prefix);?><?php _e( $post_type );?>_deps[]" value="<?php _e( $key );?>" 
-                  <?php
-                  //check to see if the script was selected 
-                  if( !empty($scripts[$wp_enqueuer->prefix.$post_type.'_deps']) ){
-
-                    if( array_key_exists($key, $scripts[$wp_enqueuer->prefix.$post_type.'_deps']) ){
-                        echo "checked";
-                      }
-                  }
-                  ?> class="wp_enqueuer"></td>
                 <td><input type="checkbox" name="<?php _e($wp_enqueuer->prefix);?><?php _e( $post_type );?>_footer[]" value="<?php _e( $key );?>" 
                   <?php
                   //check to see if the script was selected or is dependent on another script
@@ -102,6 +103,7 @@ $scripts = $wp_enqueuer->get_enqueued_scripts();
                   ?> class="wp_enqueuer"></td>
               </tr>
               <?php endforeach;?>
+
               <?php foreach( $assets->styles as $key=>$script ):?>
               <tr>
                 <td><input type="checkbox" name="<?php _e($wp_enqueuer->prefix);?><?php _e( $post_type );?>[]" value="<?php _e( $key.'_styles' );?>" 
@@ -121,8 +123,20 @@ $scripts = $wp_enqueuer->get_enqueued_scripts();
                 <td>
                   <?php
                   $dep = "None";
-                  if( isset($script->deps) ){
-                    echo "<ul>";
+                  if( isset($script->deps) ){?>
+                    <input type="checkbox" name="<?php _e($wp_enqueuer->prefix);?><?php _e( $post_type );?>_deps[]" value="<?php _e( $key );?>" id="<?php _e($wp_enqueuer->prefix);?><?php _e( $post_type );?>_<?php _e( $key );?>" 
+                    <?php
+                    //check to see if the script was selected 
+                    if( !empty($scripts[$wp_enqueuer->prefix.$post_type.'_deps']) ){
+
+                      if( array_key_exists($key, $scripts[$wp_enqueuer->prefix.$post_type.'_deps']) ){
+                          echo "checked";
+                        }
+                    }
+                    ?>
+                    ><label for="<?php _e($wp_enqueuer->prefix);?><?php _e( $post_type );?>_<?php _e( $key );?>">No</label>
+                    <ul>
+                    <?php
                     foreach($script->deps as $dep){
                       _e( "<li>".$dep->name."</li>" );
                     }
@@ -132,16 +146,6 @@ $scripts = $wp_enqueuer->get_enqueued_scripts();
                   }
                   ?>
                 </td>
-                <td><input type="checkbox" name="<?php _e($wp_enqueuer->prefix);?><?php _e( $post_type );?>_deps[]" value="<?php _e( $key );?>" 
-                  <?php
-                  //check to see if the script was selected 
-                  if( !empty($scripts[$wp_enqueuer->prefix.$post_type.'_deps']) ){
-
-                    if( array_key_exists($key, $scripts[$wp_enqueuer->prefix.$post_type.'_deps']) ){
-                        echo "checked";
-                      }
-                  }
-                  ?> class="wp_enqueuer"></td></td>
                 <td></td>
               </tr>
               <?php endforeach;?>
