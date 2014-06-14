@@ -104,8 +104,8 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
     public function admin_hooks(){
       add_action( 'admin_menu', array(&$this,'settings_page') );
       add_action( 'admin_enqueue_scripts', array(&$this,'admin_enqueue') );
-      add_action( 'admin_init', array( $this, 'set_enqueue' ) );
-      add_action( 'admin_head', array( $this, 'admin_enqueue_scripts_after' ) );
+      add_action( 'admin_init', array( &$this, 'set_enqueue' ) );
+      add_action( 'admin_head', array( &$this, 'admin_enqueue_scripts_after' ) );
     }
 
     /**
@@ -116,7 +116,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
      * @return void
      */
     public function front_hooks(){
-      add_action( 'wp_enqueue_scripts', array(&$this,'') );
+      add_action( 'wp_enqueue_scripts', array(&$this,'front_enqueue_assets') );
     }
 
     public function install(){
