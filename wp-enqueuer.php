@@ -393,14 +393,15 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       // register scripts
       wp_register_script( 'bootstrap-collapse', plugin_dir_url( __FILE__ ).'library/js/bootstrap/js/bootstrap.min.js' , array('jquery'), '3.1.1' );
       wp_register_script( 'checkboxes.js', plugin_dir_url( __FILE__ ).'library/js/jquery.checkboxes-1.0.3.min.js' , array('jquery'), '1.0.3' );
-      wp_register_script( 'footable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.min.js' , array('jquery'), '0.1.0' );
-      wp_register_script( 'footable-sortable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.sortable.min.js' , array('jquery','footable'), '0.1.0' );
-      wp_register_script( 'footable-filter', plugin_dir_url( __FILE__ ).'library/js/footable/footable.filter.min.js' , array('jquery','footable'), '0.1.0' );
-      wp_register_script( 'footable-paginate', plugin_dir_url( __FILE__ ).'library/js/footable/footable.paginate.js' , array('jquery','footable'), '0.1.0' );
+     // wp_register_script( 'footable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.min.js' , array('jquery'), '0.1.0' );
+      //wp_register_script( 'footable-sortable', plugin_dir_url( __FILE__ ).'library/js/footable/footable.sortable.min.js' , array('jquery','footable'), '0.1.0' );
+      //wp_register_script( 'footable-filter', plugin_dir_url( __FILE__ ).'library/js/footable/footable.filter.min.js' , array('jquery','footable'), '0.1.0' );
+      //wp_register_script( 'footable-paginate', plugin_dir_url( __FILE__ ).'library/js/footable/footable.paginate.js' , array('jquery','footable'), '0.1.0' );
       wp_register_script( 'datatables', 'http://cdn.datatables.net/1.9.4/js/jquery.dataTables.min.js' , array('jquery'), '1.9.4' );
       wp_register_script( 'datatables-bootstrap',  plugin_dir_url( __FILE__ ).'library/js/dataTables.bootstrap.js' , array('jquery','datatables'), '1.1.1' );
       wp_register_script( 'datatables-responsive', plugin_dir_url( __FILE__ ).'library/js/datatables-responsive/files/1/js/datatables.responsive.js' , array('jquery','datatables'), '1.10.0' );
       wp_register_script( 'responsive-tabs', plugin_dir_url( __FILE__ ).'library/js/responsive-tabs/js/jquery.responsiveTabs.min.js' , array('jquery'), '1.3.3' );
+      wp_register_script( 'highlightjs', plugin_dir_url( __FILE__ ).'library/js/highlight.js/highlight.pack.js' , '', '8.0' );
       wp_register_script( 'wp-enqueuer-scripts', plugin_dir_url( __FILE__ ).'library/js/wp-enqueuer-scripts.js' , array('jquery'), $this->version );
 
       // enqueue scripts
@@ -414,6 +415,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       //wp_enqueue_script( 'datatables-bootstrap' );
       wp_enqueue_script( 'datatables-responsive' );
       wp_enqueue_script( 'responsive-tabs' );
+      wp_enqueue_script( 'highlightjs' );
       wp_enqueue_script( 'wp-enqueuer-scripts' );
     }
 
@@ -431,6 +433,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       wp_register_style( 'datatables-responsive', plugin_dir_url( __FILE__ ).'library/js/datatables-responsive/files/1/css/datatables.responsive.css' , false, '1.10.0' );
       wp_register_style( $this->dash_prefix, plugin_dir_url( __FILE__ ).'library/css/wp-enqueuer-styles.css' , false, $this->version);
       wp_register_style( 'responsive-tabs', plugin_dir_url( __FILE__ ).'library/js/responsive-tabs/css/responsive-tabs.css' , false, '1.3.3' );
+      wp_register_style( 'highlightjs', plugin_dir_url( __FILE__ ).'library/js/highlight.js/styles/monokai_sublime.css' ,false, '8.0' );
       // enqueue styles
       wp_enqueue_style( 'bootstrap-collapse' );
      // wp_enqueue_style( 'footable' );
@@ -438,6 +441,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
       wp_enqueue_style( 'datatables' );
       wp_enqueue_style( 'datatables-responsive' );
       wp_enqueue_style( 'responsive-tabs' );
+      wp_enqueue_style( 'highlightjs' );
       wp_enqueue_style( $this->dash_prefix );
     }
 
@@ -507,6 +511,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
         <script type='text/javascript'>
         /* <![CDATA[ */
         <!--START WP ENQUEUER JAVASCRIPT-->
+          hljs.initHighlightingOnLoad();
           if (window.jQuery) {
             jQuery(document).ready(function($){
               <?php echo $responsive_code;?>
@@ -531,7 +536,7 @@ if( ! array_key_exists( 'wp-enqueuer', $GLOBALS ) ) {
 
       $enqueue_code = $this->front_enqueue_assets($post_type,true);
       if( !empty($enqueue_code) ){
-        $manual_enqueue = "<pre class='".$this->prefix."manual_code'>\n&lt;?php\n".$enqueue_code."?&gt;</pre>";
+        $manual_enqueue = "<pre class='".$this->prefix."manual_code'><code class='php'>\n&lt;?php\n".$enqueue_code."?&gt;</code></pre>";
       }
 
       return $manual_enqueue;
