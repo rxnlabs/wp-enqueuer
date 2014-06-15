@@ -207,8 +207,8 @@
     },
     "font-awesome": {
       "host": "cdn",
-      "version": "4.0.3",
-      "uri": "//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css"
+      "version": "4.1.0",
+      "uri": "//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css"
     },
     "skeleton": {
       "host": "cdn",
