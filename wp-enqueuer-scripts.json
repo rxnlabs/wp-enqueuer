@@ -53,7 +53,12 @@
     "breakpoints": {
       "host": "local",
       "version": "1.0",
-      "uri": "breakpoints.js"
+      "uri": "breakpoints.js",
+      "deps": [
+        {
+          "name": "jquery"
+        }
+      ]
     },
     "jquery-cookie": {
       "host": "cdn",
@@ -187,6 +192,21 @@
       "host": "local",
       "version": "1.0.3",
       "uri": "jquery.checkboxes-1.0.3.min.js",
+      "deps": [
+        {
+          "name": "jquery"
+        }
+      ]
+    },
+    "masonry": {
+      "host": "cdn",
+      "version": "3.1.5",
+      "uri": "//cdnjs.cloudflare.com/ajax/libs/masonry/3.1.5/masonry.pkgd.min.js"
+    },
+    "isotope": {
+      "host": "cdn",
+      "version": "1.5.25",
+      "uri": "//cdnjs.cloudflare.com/ajax/libs/jquery.isotope/1.5.25/jquery.isotope.min.js",
       "deps": [
         {
           "name": "jquery"
